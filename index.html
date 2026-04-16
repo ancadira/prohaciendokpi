@@ -1,0 +1,1352 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financiero - PROHACIENDO</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #0F6E56 0%, #1D9E75 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #2C2C2A;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #0F6E56 0%, #1D9E75 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 32px;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .header p {
+            font-size: 14px;
+            opacity: 0.95;
+        }
+        
+        .month-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            background: #EAF3DE;
+            flex-wrap: wrap;
+        }
+        
+        .month-btn {
+            padding: 10px 20px;
+            border: 2px solid #0F6E56;
+            background: white;
+            color: #0F6E56;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            font-size: 13px;
+            text-transform: uppercase;
+        }
+        
+        .month-btn:hover {
+            background: #0F6E56;
+            color: white;
+        }
+        
+        .month-btn.active {
+            background: #0F6E56;
+            color: white;
+        }
+        
+        .month-btn.disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .tabs {
+            display: flex;
+            border-bottom: 2px solid #B4B2A9;
+            background: white;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .tab-btn {
+            flex: 1;
+            padding: 16px;
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            color: #5F5E5A;
+            text-transform: uppercase;
+            border-bottom: 3px solid transparent;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .tab-btn:hover {
+            color: #0F6E56;
+            background: #EAF3DE;
+        }
+        
+        .tab-btn.active {
+            color: #0F6E56;
+            border-bottom-color: #0F6E56;
+        }
+        
+        .content {
+            padding: 30px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .metric-card {
+            background: linear-gradient(135deg, #EAF3DE 0%, #C0DD97 100%);
+            padding: 20px;
+            border-radius: 8px;
+            border: 1px solid #97C459;
+        }
+        
+        .metric-label {
+            font-size: 12px;
+            color: #3B6D11;
+            font-weight: 600;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+        
+        .metric-value {
+            font-size: 24px;
+            font-weight: 700;
+            color: #0F6E56;
+            margin-bottom: 4px;
+        }
+        
+        .metric-formula {
+            font-size: 11px;
+            color: #27500A;
+            font-style: italic;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(15, 110, 86, 0.2);
+        }
+        
+        .indicator-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .indicator-card {
+            background: white;
+            border: 1px solid #B4B2A9;
+            border-radius: 8px;
+            padding: 20px;
+            transition: all 0.3s ease;
+        }
+        
+        .indicator-card:hover {
+            box-shadow: 0 5px 20px rgba(15, 110, 86, 0.1);
+            border-color: #1D9E75;
+        }
+        
+        .indicator-header {
+            border-bottom: 2px solid #0F6E56;
+            padding-bottom: 12px;
+            margin-bottom: 12px;
+        }
+        
+        .indicator-title {
+            font-size: 14px;
+            font-weight: 700;
+            color: #0F6E56;
+            margin-bottom: 4px;
+        }
+        
+        .indicator-category {
+            font-size: 11px;
+            color: #5F5E5A;
+            text-transform: uppercase;
+            font-weight: 600;
+        }
+        
+        .indicator-body {
+            display: grid;
+            gap: 12px;
+        }
+        
+        .indicator-row {
+            font-size: 12px;
+            display: grid;
+            grid-template-columns: 100px 1fr;
+            gap: 8px;
+        }
+        
+        .indicator-label {
+            color: #5F5E5A;
+            font-weight: 600;
+        }
+        
+        .indicator-value {
+            color: #0F6E56;
+            font-weight: 700;
+        }
+        
+        .comparison-section {
+            background: white;
+            border: 1px solid #B4B2A9;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .comparison-header {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 20px;
+            align-items: end;
+        }
+        
+        .selector-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .selector-label {
+            font-size: 12px;
+            font-weight: 600;
+            color: #0F6E56;
+            text-transform: uppercase;
+        }
+        
+        select {
+            padding: 10px 12px;
+            border: 1px solid #B4B2A9;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+            color: #2C2C2A;
+            cursor: pointer;
+        }
+        
+        select:hover {
+            border-color: #0F6E56;
+        }
+        
+        .analysis-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        
+        .analysis-table th {
+            background: #EAF3DE;
+            color: #0F6E56;
+            padding: 12px;
+            text-align: left;
+            font-weight: 600;
+            border-bottom: 2px solid #0F6E56;
+        }
+        
+        .analysis-table td {
+            padding: 12px;
+            border-bottom: 1px solid #D3D1C7;
+        }
+        
+        .analysis-table tr:hover {
+            background: #F1EFE8;
+        }
+        
+        .item-name {
+            color: #0F6E56;
+            font-weight: 600;
+        }
+        
+        .number {
+            text-align: right;
+            font-family: 'Courier New', monospace;
+            color: #185FA5;
+            font-weight: 600;
+        }
+        
+        .percentage {
+            text-align: right;
+            color: #639922;
+            font-weight: 600;
+        }
+        
+        .change-positive {
+            color: #27500A;
+            font-weight: 600;
+        }
+        
+        .change-negative {
+            color: #993C1D;
+            font-weight: 600;
+        }
+        
+        .footer {
+            background: #F1EFE8;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #5F5E5A;
+            border-top: 1px solid #B4B2A9;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 40px;
+            color: #5F5E5A;
+            background: #F1EFE8;
+            border-radius: 8px;
+        }
+        
+        .kri-card {
+            background: white;
+            border-left: 5px solid #0F6E56;
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            transition: all 0.3s ease;
+        }
+        
+        .kri-card.green {
+            border-left-color: #27500A;
+            background: #FAFFF8;
+        }
+        
+        .kri-card.yellow {
+            border-left-color: #FFC107;
+            background: #FFFBF0;
+        }
+        
+        .kri-card.red {
+            border-left-color: #DC3545;
+            background: #FFF5F5;
+        }
+        
+        .kri-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 10px;
+            border-bottom: 1px solid #E0E0E0;
+        }
+        
+        .kri-title {
+            font-size: 13px;
+            font-weight: 700;
+            color: #0F6E56;
+            text-transform: uppercase;
+        }
+        
+        .kri-status {
+            font-size: 20px;
+            font-weight: 700;
+        }
+        
+        .kri-status.green {
+            color: #27500A;
+        }
+        
+        .kri-status.yellow {
+            color: #FFC107;
+        }
+        
+        .kri-status.red {
+            color: #DC3545;
+        }
+        
+        .kri-value {
+            font-size: 28px;
+            font-weight: 700;
+            color: #185FA5;
+            margin: 10px 0;
+        }
+        
+        .kri-threshold {
+            font-size: 12px;
+            color: #5F5E5A;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid rgba(0, 0, 0, 0.1);
+        }
+        
+        .kri-threshold-label {
+            font-weight: 600;
+            color: #0F6E56;
+        }
+        
+        .kri-alert {
+            font-size: 11px;
+            margin-top: 10px;
+            padding: 8px;
+            border-radius: 4px;
+            line-height: 1.4;
+        }
+        
+        .kri-alert.green {
+            background: #E8F5E9;
+            color: #27500A;
+        }
+        
+        .kri-alert.yellow {
+            background: #FFF8E1;
+            color: #856404;
+        }
+        
+        .kri-alert.red {
+            background: #FFEBEE;
+            color: #721C24;
+        }
+        
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>📊 Dashboard Financiero PROHACIENDO</h1>
+            <p>Corporación para la Promoción del Desarrollo Rural y Agroindustrial - NIT: 890706424-1</p>
+        </div>
+        
+        <div class="month-selector">
+            <button class="month-btn active" data-month="ENERO">Enero 2026</button>
+            <button class="month-btn" data-month="FEBRERO">Febrero 2026</button>
+            <button class="month-btn" data-month="MARZO">Marzo 2026</button>
+            <button class="month-btn disabled" data-month="ABRIL">Abril 2026</button>
+            <button class="month-btn disabled" data-month="MAYO">Mayo 2026</button>
+            <button class="month-btn disabled" data-month="JUNIO">Junio 2026</button>
+            <button class="month-btn disabled" data-month="JULIO">Julio 2026</button>
+            <button class="month-btn disabled" data-month="AGOSTO">Agosto 2026</button>
+            <button class="month-btn disabled" data-month="SEPTIEMBRE">Septiembre 2026</button>
+            <button class="month-btn disabled" data-month="OCTUBRE">Octubre 2026</button>
+            <button class="month-btn disabled" data-month="NOVIEMBRE">Noviembre 2026</button>
+            <button class="month-btn disabled" data-month="DICIEMBRE">Diciembre 2026</button>
+        </div>
+        
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="indicadores">Indicadores Financieros</button>
+            <button class="tab-btn" data-tab="kri">Indicadores de Alerta (KRI)</button>
+            <button class="tab-btn" data-tab="vertical">Análisis Vertical</button>
+            <button class="tab-btn" data-tab="horizontal">Análisis Horizontal</button>
+        </div>
+        
+        <div class="content">
+            <!-- TAB: INDICADORES FINANCIEROS -->
+            <div id="indicadores" class="tab-content active">
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #0F6E56; font-size: 20px; margin-bottom: 20px;">Indicadores Financieros - <span id="current-month">Enero 2026</span></h2>
+                    
+                    <!-- LIQUIDEZ -->
+                    <h3 style="color: #0F6E56; font-size: 16px; margin: 30px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #0F6E56;">Liquidez</h3>
+                    <div class="indicator-grid" id="liquidez-indicators"></div>
+                    
+                    <!-- ENDEUDAMIENTO -->
+                    <h3 style="color: #0F6E56; font-size: 16px; margin: 30px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #0F6E56;">Endeudamiento</h3>
+                    <div class="indicator-grid" id="endeudamiento-indicators"></div>
+                    
+                    <!-- RENTABILIDAD -->
+                    <h3 style="color: #0F6E56; font-size: 16px; margin: 30px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #0F6E56;">Rentabilidad</h3>
+                    <div class="indicator-grid" id="rentabilidad-indicators"></div>
+                    
+                    <!-- ESTRUCTURA -->
+                    <h3 style="color: #0F6E56; font-size: 16px; margin: 30px 0 15px 0; padding-bottom: 10px; border-bottom: 2px solid #0F6E56;">Estructura del Capital</h3>
+                    <div class="indicator-grid" id="estructura-indicators"></div>
+                </div>
+            </div>
+            
+            <!-- TAB: INDICADORES DE ALERTA TEMPRANA (KRI) -->
+            <div id="kri" class="tab-content">
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #0F6E56; font-size: 20px; margin-bottom: 20px;">Indicadores de Alerta Temprana (KRI) - Risk Indicators</h2>
+                    
+                    <div style="background: #FFF3CD; border-left: 4px solid #FFC107; padding: 15px; border-radius: 4px; margin-bottom: 30px;">
+                        <p style="margin: 0; color: #856404; font-size: 13px;"><strong>ℹ️ Interpretación:</strong> Los indicadores <span style="background: #E8F5E9; padding: 2px 6px; border-radius: 3px; color: #27500A;">🟢 Verde</span> están dentro de lo esperado. <span style="background: #FFF3CD; padding: 2px 6px; border-radius: 3px; color: #856404;">🟡 Amarillo</span> requiere monitoreo cercano. <span style="background: #F8D7DA; padding: 2px 6px; border-radius: 3px; color: #721C24;">🔴 Rojo</span> indica situación crítica.</p>
+                    </div>
+                    
+                    <div id="kri-indicators-container" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 20px;"></div>
+                    
+                    <h3 style="color: #0F6E56; font-size: 16px; margin: 40px 0 20px 0; padding-bottom: 10px; border-bottom: 2px solid #0F6E56;">Resumen Histórico de Indicadores</h3>
+                    <div style="overflow-x: auto;">
+                        <table class="analysis-table" id="kri-summary-table"></table>
+                    </div>
+                </div>
+            </div>
+            
+            <div id="vertical" class="tab-content">
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #0F6E56; font-size: 20px; margin-bottom: 20px;">Análisis Vertical (Composición Porcentual)</h2>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                        <div>
+                            <h3 style="color: #185FA5; font-size: 14px; margin-bottom: 15px; font-weight: 600;">BALANCE GENERAL - COMPOSICIÓN PORCENTUAL DE ACTIVOS</h3>
+                            <table class="analysis-table" id="vertical-balance-table"></table>
+                        </div>
+                        <div>
+                            <h3 style="color: #185FA5; font-size: 14px; margin-bottom: 15px; font-weight: 600;">ESTADO DE RESULTADOS - COMPOSICIÓN PORCENTUAL DE INGRESOS/GASTOS</h3>
+                            <table class="analysis-table" id="vertical-income-table"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- TAB: ANÁLISIS HORIZONTAL -->
+            <div id="horizontal" class="tab-content">
+                <div style="margin-bottom: 30px;">
+                    <h2 style="color: #0F6E56; font-size: 20px; margin-bottom: 20px;">Análisis Horizontal (Variación Período a Período)</h2>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 30px;">
+                        <div>
+                            <h3 style="color: #185FA5; font-size: 14px; margin-bottom: 15px; font-weight: 600;">BALANCE GENERAL</h3>
+                            <table class="analysis-table" id="horizontal-balance-table"></table>
+                        </div>
+                        <div>
+                            <h3 style="color: #185FA5; font-size: 14px; margin-bottom: 15px; font-weight: 600;">ESTADO DE RESULTADOS</h3>
+                            <table class="analysis-table" id="horizontal-income-table"></table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>© 2026 PROHACIENDO - Datos actualizados a Marzo 2026</p>
+        </div>
+    </div>
+
+    <script>
+        // Datos financieros del Balance de Prueba 2026 - GRUPOS COMPLETOS DE 2 DÍGITOS + CAMPOS INDIVIDUALES
+        const financialData = {
+            'ENERO': {
+                // Totales principales
+                'ACTIVOS': 6957941989.72,
+                'PASIVOS': 3165582339.1,
+                'PATRIMONIO': 3792359650.62,  // Activos - Pasivos
+                'INGRESOS': 21697862.55,
+                'GASTOS': 69150508.95,
+                // Campos individuales para indicadores (compatibilidad backwards)
+                'EFECTIVO': 2203783255.71,
+                'INVERSIONES': 1314039679.42,
+                'DEUDORES': 1081835658.15,
+                'PROPIEDAD_PLANTA': 2347695622.25,
+                'DIFERIDOS_A': 10587774,
+                'OBLIGACIONES_FIN': 4222311,
+                'CUENTAS_POR_PAGAR': 497208111,
+                'IMPUESTOS': 85566042,
+                'BENEFICIO_EMPLEADOS': 34320231,
+                'PASIVOS_ESTIMADOS': 4746437,
+                'DIFERIDOS_P': 123220852,
+                'OTROS_PASIVOS': 2416298355,
+                'CAPITAL': 800000,
+                'SUPERAVIT_CAPITAL': 256613167,
+                'RESERVAS': 636862987,
+                'RESULTADOS_EJERCICIO': -47452646.40,  // Ingresos - Gastos
+                'RESULTADOS_ANTERIORES': 3202296510.02,  // Patrimonio - (Capital + Superávit + Reservas + Resultado)
+                'INGRESOS_OPERACIONALES': 21139324,
+                'INGRESOS_NO_OPERACIONALES': 558538,
+                'GASTOS_ADMIN': 65151358,
+                'GASTOS_NO_OPERACIONALES': 3999151,
+                // Grupos de 2 dígitos para análisis vertical/horizontal
+                '11': { nombre: 'EFECTIVO Y SUS EQUIVALENTES', valor: 2203783255.71 },
+                '12': { nombre: 'INVERSIONES', valor: 1314039679.42 },
+                '13': { nombre: 'DEUDORES', valor: 1081835658.15 },
+                '15': { nombre: 'PROPIEDADES, PLANTA Y EQUIPO', valor: 2347695622.25 },
+                '17': { nombre: 'DIFERIDOS', valor: 10587774.19 },
+                '21': { nombre: 'OBLIGACIONES FINANCIERAS', valor: 4222311.19 },
+                '23': { nombre: 'CUENTAS POR PAGAR', valor: 497208111.33 },
+                '24': { nombre: 'IMPUESTOS, GRAVÁMENES Y TASAS', valor: 85566041.53 },
+                '25': { nombre: 'BENEFICIO A EMPLEADOS', valor: 34320230.56 },
+                '26': { nombre: 'PASIVOS ESTIMADOS Y PROVISIONES', valor: 4746437.0 },
+                '27': { nombre: 'DIFERIDOS', valor: 123220852.0 },
+                '28': { nombre: 'OTROS PASIVOS', valor: 2416298355.49 },
+                '31': { nombre: 'CAPITAL SOCIAL', valor: 800000.0 },
+                '32': { nombre: 'SUPERÁVIT DE CAPITAL', valor: 256613166.66 },
+                '33': { nombre: 'RESERVAS', valor: 636862987.4 },
+                '36': { nombre: 'RESULTADOS DEL EJERCICIO', valor: -47452646.40 },
+                '37': { nombre: 'RESULTADOS DE EJERCICIOS ANTERIORES', valor: 3202296510.02 },
+                '41': { nombre: 'OPERACIONALES', valor: 21139324.49 },
+                '42': { nombre: 'NO OPERACIONALES', valor: 558538.06 },
+                '51': { nombre: 'OPERACIONALES DE ADMINISTRACIÓN', valor: 65151358.18 },
+                '53': { nombre: 'NO OPERACIONALES', valor: 3999150.77 }
+            },
+            'FEBRERO': {
+                // Totales principales
+                'ACTIVOS': 6477304212.75,
+                'PASIVOS': 2730997776.12,
+                'PATRIMONIO': 3746306436.63,  // Activos - Pasivos
+                'INGRESOS': 42356514.82,
+                'GASTOS': 135862375.21,
+                // Campos individuales para indicadores
+                'EFECTIVO': 1809924959.56,
+                'INVERSIONES': 1147039679.42,
+                'DEUDORES': 1162056177.33,
+                'PROPIEDAD_PLANTA': 2347695622.25,
+                'DIFERIDOS_A': 10587774,
+                'OBLIGACIONES_FIN': 1866723,
+                'CUENTAS_POR_PAGAR': 435206987,
+                'IMPUESTOS': 85762747,
+                'BENEFICIO_EMPLEADOS': 34320231,
+                'PASIVOS_ESTIMADOS': 9492874,
+                'DIFERIDOS_P': 123220852,
+                'OTROS_PASIVOS': 2041127363,
+                'CAPITAL': 800000,
+                'SUPERAVIT_CAPITAL': 256613167,
+                'RESERVAS': 636862987,
+                'RESULTADOS_EJERCICIO': -93505860.39,  // Ingresos - Gastos
+                'RESULTADOS_ANTERIORES': 3109204109.63,  // Patrimonio - (Capital + Superávit + Reservas + Resultado)
+                'INGRESOS_OPERACIONALES': 41523358,
+                'INGRESOS_NO_OPERACIONALES': 833157,
+                'GASTOS_ADMIN': 128660227,
+                'GASTOS_NO_OPERACIONALES': 7202149,
+                // Grupos de 2 dígitos para análisis vertical/horizontal
+                '11': { nombre: 'EFECTIVO Y SUS EQUIVALENTES', valor: 1809924959.56 },
+                '12': { nombre: 'INVERSIONES', valor: 1147039679.42 },
+                '13': { nombre: 'DEUDORES', valor: 1162056177.33 },
+                '15': { nombre: 'PROPIEDADES, PLANTA Y EQUIPO', valor: 2347695622.25 },
+                '17': { nombre: 'DIFERIDOS', valor: 10587774.19 },
+                '21': { nombre: 'OBLIGACIONES FINANCIERAS', valor: 1866722.63 },
+                '23': { nombre: 'CUENTAS POR PAGAR', valor: 435206986.94 },
+                '24': { nombre: 'IMPUESTOS, GRAVÁMENES Y TASAS', valor: 85762747.21 },
+                '25': { nombre: 'BENEFICIO A EMPLEADOS', valor: 34320230.56 },
+                '26': { nombre: 'PASIVOS ESTIMADOS Y PROVISIONES', valor: 9492874.0 },
+                '27': { nombre: 'DIFERIDOS', valor: 123220852.0 },
+                '28': { nombre: 'OTROS PASIVOS', valor: 2041127362.78 },
+                '31': { nombre: 'CAPITAL SOCIAL', valor: 800000.0 },
+                '32': { nombre: 'SUPERÁVIT DE CAPITAL', valor: 256613166.66 },
+                '33': { nombre: 'RESERVAS', valor: 636862987.4 },
+                '36': { nombre: 'RESULTADOS DEL EJERCICIO', valor: -93505860.39 },
+                '37': { nombre: 'RESULTADOS DE EJERCICIOS ANTERIORES', valor: 3109204109.63 },
+                '41': { nombre: 'OPERACIONALES', valor: 41523357.95 },
+                '42': { nombre: 'NO OPERACIONALES', valor: 833156.87 },
+                '51': { nombre: 'OPERACIONALES DE ADMINISTRACIÓN', valor: 128660226.54 },
+                '53': { nombre: 'NO OPERACIONALES', valor: 7202148.67 }
+            },
+            'MARZO': {
+                // Totales principales
+                'ACTIVOS': 5605381248.34,
+                'PASIVOS': 1901386485.13,
+                'PATRIMONIO': 3703994763.21,  // Activos - Pasivos
+                'INGRESOS': 60156861.9,
+                'GASTOS': 195974395.71,
+                // Campos individuales para indicadores
+                'EFECTIVO': 1273518769.76,
+                'INVERSIONES': 1147039679.42,
+                'DEUDORES': 820339502.72,
+                'PROPIEDAD_PLANTA': 2347695622.25,
+                'DIFERIDOS_A': 16787674,
+                'OBLIGACIONES_FIN': 101871,
+                'CUENTAS_POR_PAGAR': 500285333,
+                'IMPUESTOS': 85959453,
+                'BENEFICIO_EMPLEADOS': 54284942,
+                'PASIVOS_ESTIMADOS': 14239311,
+                'DIFERIDOS_P': 123283852,
+                'OTROS_PASIVOS': 1123231724,
+                'CAPITAL': 800000,
+                'SUPERAVIT_CAPITAL': 256613167,
+                'RESERVAS': 636862987,
+                'RESULTADOS_EJERCICIO': -135817533.81,  // Ingresos - Gastos
+                'RESULTADOS_ANTERIORES': 3073709177.44,  // Patrimonio - (Capital + Superávit + Reservas + Resultado)
+                'INGRESOS_OPERACIONALES': 59323705,
+                'INGRESOS_NO_OPERACIONALES': 833157,
+                'GASTOS_ADMIN': 188213615,
+                'GASTOS_NO_OPERACIONALES': 7760781,
+                // Grupos de 2 dígitos para análisis vertical/horizontal
+                '11': { nombre: 'EFECTIVO Y SUS EQUIVALENTES', valor: 1273518769.76 },
+                '12': { nombre: 'INVERSIONES', valor: 1147039679.42 },
+                '13': { nombre: 'DEUDORES', valor: 820339502.72 },
+                '15': { nombre: 'PROPIEDADES, PLANTA Y EQUIPO', valor: 2347695622.25 },
+                '17': { nombre: 'DIFERIDOS', valor: 16787674.19 },
+                '21': { nombre: 'OBLIGACIONES FINANCIERAS', valor: 101870.63 },
+                '23': { nombre: 'CUENTAS POR PAGAR', valor: 500285333.19 },
+                '24': { nombre: 'IMPUESTOS, GRAVÁMENES Y TASAS', valor: 85959452.89 },
+                '25': { nombre: 'BENEFICIO A EMPLEADOS', valor: 54284941.56 },
+                '26': { nombre: 'PASIVOS ESTIMADOS Y PROVISIONES', valor: 14239311.0 },
+                '27': { nombre: 'DIFERIDOS', valor: 123283852.0 },
+                '28': { nombre: 'OTROS PASIVOS', valor: 1123231723.86 },
+                '31': { nombre: 'CAPITAL SOCIAL', valor: 800000.0 },
+                '32': { nombre: 'SUPERÁVIT DE CAPITAL', valor: 256613166.66 },
+                '33': { nombre: 'RESERVAS', valor: 636862987.4 },
+                '36': { nombre: 'RESULTADOS DEL EJERCICIO', valor: -135817533.81 },
+                '37': { nombre: 'RESULTADOS DE EJERCICIOS ANTERIORES', valor: 3073709177.44 },
+                '41': { nombre: 'OPERACIONALES', valor: 59323705.03 },
+                '42': { nombre: 'NO OPERACIONALES', valor: 833156.87 },
+                '51': { nombre: 'OPERACIONALES DE ADMINISTRACIÓN', valor: 188213614.55 },
+                '53': { nombre: 'NO OPERACIONALES', valor: 7760781.16 }
+            }
+        };
+
+        let currentMonth = 'ENERO';
+
+        // Funciones de formato
+        function formatCurrency(value) {
+            return new Intl.NumberFormat('es-CO', {
+                style: 'currency',
+                currency: 'COP',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(value);
+        }
+
+        function formatPercent(value) {
+            return (value * 100).toFixed(2) + '%';
+        }
+
+        // Calcular indicadores
+        function calculateIndicators(month) {
+            const data = financialData[month];
+            
+            // Activos corrientes = Efectivo + Inversiones + Deudores (corto plazo)
+            const activosCorrientes = data.EFECTIVO + data.INVERSIONES + (data.DEUDORES * 0.5);
+            const activosNoCorrientes = data.PROPIEDAD_PLANTA + data.DIFERIDOS_A + (data.DEUDORES * 0.5);
+            
+            // Pasivos corrientes (corto plazo)
+            const pasivosCorrientes = data.OBLIGACIONES_FIN + data.CUENTAS_POR_PAGAR + data.IMPUESTOS + data.BENEFICIO_EMPLEADOS;
+            const pasivosNoCorrientes = data.PASIVOS_ESTIMADOS + data.DIFERIDOS_P + data.OTROS_PASIVOS;
+            
+            return {
+                // LIQUIDEZ
+                liquidez: {
+                    'Razón Corriente': {
+                        formula: 'Activos Corrientes / Pasivos Corrientes',
+                        numerador: activosCorrientes,
+                        denominador: pasivosCorrientes,
+                        base1: activosCorrientes,
+                        base2: pasivosCorrientes
+                    },
+                    'Prueba Ácida': {
+                        formula: '(Efectivo + Inversiones) / Pasivos Corrientes',
+                        numerador: data.EFECTIVO + data.INVERSIONES,
+                        denominador: pasivosCorrientes,
+                        base1: data.EFECTIVO + data.INVERSIONES,
+                        base2: pasivosCorrientes
+                    },
+                    'Índice de Efectivo': {
+                        formula: 'Efectivo / Pasivos Corrientes',
+                        numerador: data.EFECTIVO,
+                        denominador: pasivosCorrientes,
+                        base1: data.EFECTIVO,
+                        base2: pasivosCorrientes
+                    }
+                },
+                // ENDEUDAMIENTO
+                endeudamiento: {
+                    'Razón de Endeudamiento': {
+                        formula: 'Pasivos Total / Activos Total',
+                        numerador: data.PASIVOS,
+                        denominador: data.ACTIVOS,
+                        base1: data.PASIVOS,
+                        base2: data.ACTIVOS
+                    },
+                    'Razón de Autonomía': {
+                        formula: 'Patrimonio / Activos Total',
+                        numerador: data.PATRIMONIO,
+                        denominador: data.ACTIVOS,
+                        base1: data.PATRIMONIO,
+                        base2: data.ACTIVOS
+                    },
+                    'Apalancamiento': {
+                        formula: 'Pasivos Total / Patrimonio',
+                        numerador: data.PASIVOS,
+                        denominador: data.PATRIMONIO,
+                        base1: data.PASIVOS,
+                        base2: data.PATRIMONIO
+                    },
+                    'Leverage Financiero': {
+                        formula: 'Activos Total / Patrimonio',
+                        numerador: data.ACTIVOS,
+                        denominador: data.PATRIMONIO,
+                        base1: data.ACTIVOS,
+                        base2: data.PATRIMONIO
+                    }
+                },
+                // RENTABILIDAD
+                rentabilidad: {
+                    'Margen Operacional': {
+                        formula: 'Ingresos Operacionales / Ingresos Total',
+                        numerador: data.INGRESOS_OPERACIONALES,
+                        denominador: data.INGRESOS,
+                        base1: data.INGRESOS_OPERACIONALES,
+                        base2: data.INGRESOS
+                    },
+                    'Margen Neto': {
+                        formula: '(Ingresos - Gastos) / Ingresos',
+                        numerador: data.INGRESOS - data.GASTOS,
+                        denominador: data.INGRESOS,
+                        base1: data.INGRESOS - data.GASTOS,
+                        base2: data.INGRESOS
+                    },
+                    'ROA (Rentabilidad del Activo)': {
+                        formula: '(Ingresos - Gastos) / Activos Total',
+                        numerador: data.INGRESOS - data.GASTOS,
+                        denominador: data.ACTIVOS,
+                        base1: data.INGRESOS - data.GASTOS,
+                        base2: data.ACTIVOS
+                    },
+                    'ROE (Rentabilidad del Patrimonio)': {
+                        formula: '(Ingresos - Gastos) / Patrimonio',
+                        numerador: data.INGRESOS - data.GASTOS,
+                        denominador: data.PATRIMONIO,
+                        base1: data.INGRESOS - data.GASTOS,
+                        base2: data.PATRIMONIO
+                    }
+                },
+                // ESTRUCTURA
+                estructura: {
+                    'Estructura Activos Corrientes': {
+                        formula: 'Activos Corrientes / Activos Total',
+                        numerador: activosCorrientes,
+                        denominador: data.ACTIVOS,
+                        base1: activosCorrientes,
+                        base2: data.ACTIVOS
+                    },
+                    'Estructura Activos Fijos': {
+                        formula: 'Propiedad Planta Equipo / Activos Total',
+                        numerador: data.PROPIEDAD_PLANTA,
+                        denominador: data.ACTIVOS,
+                        base1: data.PROPIEDAD_PLANTA,
+                        base2: data.ACTIVOS
+                    },
+                    'Estructura Pasivos Corrientes': {
+                        formula: 'Pasivos Corrientes / Pasivos Total',
+                        numerador: pasivosCorrientes,
+                        denominador: data.PASIVOS,
+                        base1: pasivosCorrientes,
+                        base2: data.PASIVOS
+                    },
+                    'Composición Patrimonio': {
+                        formula: 'Capital y Reservas / Patrimonio Total',
+                        numerador: data.CAPITAL + data.RESERVAS,
+                        denominador: data.PATRIMONIO,
+                        base1: data.CAPITAL + data.RESERVAS,
+                        base2: data.PATRIMONIO
+                    }
+                }
+            };
+        }
+
+        // Renderizar indicadores
+        function renderIndicators(month) {
+            const indicators = calculateIndicators(month);
+            
+            // Liquidez
+            document.getElementById('liquidez-indicators').innerHTML = 
+                Object.entries(indicators.liquidez).map(([name, data]) => `
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <div class="indicator-title">${name}</div>
+                            <div class="indicator-category">Liquidez</div>
+                        </div>
+                        <div class="indicator-body">
+                            <div class="indicator-row">
+                                <span class="indicator-label">Fórmula:</span>
+                                <span class="indicator-value" style="font-size: 11px;">${data.formula}</span>
+                            </div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Numerador:</span>
+                                <span class="indicator-value">${formatCurrency(data.base1)}</span>
+                            </div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Denominador:</span>
+                                <span class="indicator-value">${formatCurrency(data.base2)}</span>
+                            </div>
+                            <div style="border-top: 1px solid #0F6E56; margin: 12px 0;"></div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Resultado:</span>
+                                <span class="indicator-value" style="font-size: 20px; color: #639922;">${(data.numerador / data.denominador).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            
+            // Endeudamiento
+            document.getElementById('endeudamiento-indicators').innerHTML = 
+                Object.entries(indicators.endeudamiento).map(([name, data]) => `
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <div class="indicator-title">${name}</div>
+                            <div class="indicator-category">Endeudamiento</div>
+                        </div>
+                        <div class="indicator-body">
+                            <div class="indicator-row">
+                                <span class="indicator-label">Fórmula:</span>
+                                <span class="indicator-value" style="font-size: 11px;">${data.formula}</span>
+                            </div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Numerador:</span>
+                                <span class="indicator-value">${formatCurrency(data.base1)}</span>
+                            </div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Denominador:</span>
+                                <span class="indicator-value">${formatCurrency(data.base2)}</span>
+                            </div>
+                            <div style="border-top: 1px solid #0F6E56; margin: 12px 0;"></div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Resultado:</span>
+                                <span class="indicator-value" style="font-size: 20px; color: #993C1D;">${(data.numerador / data.denominador).toFixed(2)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            
+            // Rentabilidad
+            document.getElementById('rentabilidad-indicators').innerHTML = 
+                Object.entries(indicators.rentabilidad).map(([name, data]) => `
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <div class="indicator-title">${name}</div>
+                            <div class="indicator-category">Rentabilidad</div>
+                        </div>
+                        <div class="indicator-body">
+                            <div class="indicator-row">
+                                <span class="indicator-label">Fórmula:</span>
+                                <span class="indicator-value" style="font-size: 11px;">${data.formula}</span>
+                            </div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Numerador:</span>
+                                <span class="indicator-value">${formatCurrency(data.base1)}</span>
+                            </div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Denominador:</span>
+                                <span class="indicator-value">${formatCurrency(data.base2)}</span>
+                            </div>
+                            <div style="border-top: 1px solid #0F6E56; margin: 12px 0;"></div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Resultado:</span>
+                                <span class="indicator-value" style="font-size: 18px; color: #27500A;">${formatPercent(data.numerador / data.denominador)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            
+            // Estructura
+            document.getElementById('estructura-indicators').innerHTML = 
+                Object.entries(indicators.estructura).map(([name, data]) => `
+                    <div class="indicator-card">
+                        <div class="indicator-header">
+                            <div class="indicator-title">${name}</div>
+                            <div class="indicator-category">Estructura</div>
+                        </div>
+                        <div class="indicator-body">
+                            <div class="indicator-row">
+                                <span class="indicator-label">Fórmula:</span>
+                                <span class="indicator-value" style="font-size: 11px;">${data.formula}</span>
+                            </div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Numerador:</span>
+                                <span class="indicator-value">${formatCurrency(data.base1)}</span>
+                            </div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Denominador:</span>
+                                <span class="indicator-value">${formatCurrency(data.base2)}</span>
+                            </div>
+                            <div style="border-top: 1px solid #0F6E56; margin: 12px 0;"></div>
+                            <div class="indicator-row">
+                                <span class="indicator-label">Resultado:</span>
+                                <span class="indicator-value" style="font-size: 18px; color: #185FA5;">${formatPercent(data.numerador / data.denominador)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+        }
+
+        // Análisis Vertical
+        function renderVerticalAnalysis() {
+            console.log("renderVerticalAnalysis ejecutada, mes:", currentMonth);
+            console.log('=== INICIANDO renderVerticalAnalysis ===');
+            console.log('currentMonth valor:', currentMonth);
+            console.log('financialData keys:', Object.keys(financialData));
+            
+            const month = currentMonth;
+            console.log('month asignado:', month);
+            
+            const data = financialData[month];
+            console.log('data obtenida:', data ? 'SÍ' : 'NO');
+            
+            if (!data) {
+                console.error('❌ Datos no disponibles para:', month);
+                return;
+            }
+            
+            console.log('✅ Datos disponibles para:', month);
+            console.log('ACTIVOS:', data.ACTIVOS);
+            console.log('INGRESOS:', data.INGRESOS);
+            
+            // BALANCE GENERAL - ACTIVOS
+            let balanceHTML = `<tr style="background: #0F6E56; color: white; font-weight: 700;"><th colspan="2">ACTIVOS - ${month}</th></tr><tr><th>Concepto</th><th>%</th></tr>`;
+            
+            const activos = [
+                { puc: '11', nombre: data['11'].nombre, valor: data['11'].valor },
+                { puc: '12', nombre: data['12'].nombre, valor: data['12'].valor },
+                { puc: '13', nombre: data['13'].nombre, valor: data['13'].valor },
+                { puc: '15', nombre: data['15'].nombre, valor: data['15'].valor },
+                { puc: '17', nombre: data['17'].nombre, valor: data['17'].valor }
+            ];
+            
+            for (let item of activos) {
+                balanceHTML += `<tr><td class="item-name">${item.puc} - ${item.nombre}</td><td class="percentage">${formatPercent(item.valor / data.ACTIVOS)}</td></tr>`;
+            }
+            
+            balanceHTML += `<tr style="background: #E8F5E9; font-weight: 600; border-top: 2px solid #0F6E56;"><td class="item-name">TOTAL ACTIVOS (100%)</td><td class="percentage" style="color: #027500;">${formatCurrency(data.ACTIVOS)}</td></tr><tr style="height: 5px;"></tr><tr style="background: #0F6E56; color: white; font-weight: 700;"><th colspan="2">PASIVOS + PATRIMONIO - ${month}</th></tr><tr><th>Concepto</th><th>%</th></tr>`;
+            
+            const totalPP = data['PASIVOS'] + data['PATRIMONIO'];
+            const pasivos_pat = [
+                { puc: '21', nombre: data['21'].nombre, valor: data['21'].valor },
+                { puc: '23', nombre: data['23'].nombre, valor: data['23'].valor },
+                { puc: '24', nombre: data['24'].nombre, valor: data['24'].valor },
+                { puc: '25', nombre: data['25'].nombre, valor: data['25'].valor },
+                { puc: '26', nombre: data['26'].nombre, valor: data['26'].valor },
+                { puc: '27', nombre: data['27'].nombre, valor: data['27'].valor },
+                { puc: '28', nombre: data['28'].nombre, valor: data['28'].valor },
+                { puc: '31', nombre: data['31'].nombre, valor: data['31'].valor },
+                { puc: '32', nombre: data['32'].nombre, valor: data['32'].valor },
+                { puc: '33', nombre: data['33'].nombre, valor: data['33'].valor },
+                { puc: '36', nombre: data['36'].nombre, valor: data['36'].valor },
+                { puc: '37', nombre: data['37'].nombre, valor: data['37'].valor }
+            ];
+            
+            for (let item of pasivos_pat) {
+                balanceHTML += `<tr><td class="item-name">${item.puc} - ${item.nombre}</td><td class="percentage">${formatPercent(item.valor / totalPP)}</td></tr>`;
+            }
+            
+            balanceHTML += `<tr style="background: #E8F5E9; font-weight: 600; border-top: 2px solid #0F6E56;"><td class="item-name">TOTAL PASIVOS + PATRIMONIO (100%)</td><td class="percentage" style="color: #027500;">${formatCurrency(totalPP)}</td></tr>`;
+            
+            const balanceTable = document.getElementById('vertical-balance-table');
+            console.log('balanceTable elemento:', balanceTable ? 'ENCONTRADO' : 'NO ENCONTRADO');
+            if (balanceTable) {
+                balanceTable.innerHTML = balanceHTML;
+                console.log('✅ Balance table actualizada');
+            }
+            
+            // ESTADO DE RESULTADOS
+            const utilidad = data['INGRESOS'] - data['GASTOS'];
+            let incomeHTML = `<tr style="background: #0F6E56; color: white; font-weight: 700;"><th colspan="2">ESTADO DE RESULTADOS - ${month}</th></tr><tr><th>Concepto</th><th>%</th></tr><tr style="background: #FFF8E1; font-weight: 600;"><td class="item-name">INGRESOS:</td><td></td></tr><tr><td class="item-name">&nbsp;&nbsp;41 - OPERACIONALES</td><td class="percentage">${formatPercent(data['41'].valor / data.INGRESOS)}</td></tr><tr><td class="item-name">&nbsp;&nbsp;42 - NO OPERACIONALES</td><td class="percentage">${formatPercent(data['42'].valor / data.INGRESOS)}</td></tr><tr style="background: #E8F5E9; font-weight: 600; border-top: 2px solid #0F6E56;"><td class="item-name">TOTAL INGRESOS (100%)</td><td class="percentage" style="color: #027500;">${formatCurrency(data.INGRESOS)}</td></tr><tr style="height: 5px;"></tr><tr style="background: #FFF8E1; font-weight: 600;"><td class="item-name">GASTOS:</td><td></td></tr><tr><td class="item-name">&nbsp;&nbsp;51 - OPERACIONALES DE ADMINISTRACIÓN</td><td class="percentage">${formatPercent(data['51'].valor / data.INGRESOS)}</td></tr><tr><td class="item-name">&nbsp;&nbsp;53 - NO OPERACIONALES</td><td class="percentage">${formatPercent(data['53'].valor / data.INGRESOS)}</td></tr><tr style="background: #E8F5E9; font-weight: 600; border-top: 2px solid #0F6E56;"><td class="item-name">TOTAL GASTOS</td><td class="percentage">${formatPercent(data['GASTOS'] / data.INGRESOS)}</td></tr><tr style="height: 5px;"></tr><tr style="background: ${utilidad >= 0 ? '#C8E6C9' : '#FFCDD2'}; font-weight: 700; border-top: 3px solid #0F6E56;"><td class="item-name">UTILIDAD / (PÉRDIDA) NETA</td><td class="percentage" style="color: ${utilidad >= 0 ? '#027500' : '#C62828'}; font-weight: 700;">${formatPercent(utilidad / data.INGRESOS)}</td></tr><tr style="background: ${utilidad >= 0 ? '#C8E6C9' : '#FFCDD2'}; font-weight: 700;"><td class="item-name">VALOR NETO</td><td class="percentage" style="color: ${utilidad >= 0 ? '#027500' : '#C62828'};">${formatCurrency(utilidad)}</td></tr>`;
+            
+            const incomeTable = document.getElementById('vertical-income-table');
+            console.log('incomeTable elemento:', incomeTable ? 'ENCONTRADO' : 'NO ENCONTRADO');
+            if (incomeTable) {
+                incomeTable.innerHTML = incomeHTML;
+                console.log('✅ Income table actualizada');
+            }
+            
+            console.log('=== FIN renderVerticalAnalysis ===');
+        }
+        function renderHorizontalAnalysis() {
+            const currMonth = currentMonth;
+            const meses = ['ENERO', 'FEBRERO', 'MARZO'];
+            const idx = meses.indexOf(currMonth);
+            const prevMonth = idx > 0 ? meses[idx - 1] : currMonth;
+            
+            const prevData = financialData[prevMonth];
+            const currData = financialData[currMonth];
+            
+            // BALANCE GENERAL - Todos los grupos
+            const balance_items = [
+                { puc: '11', nombre: prevData['11'].nombre, prev: prevData['11'].valor, curr: currData['11'].valor },
+                { puc: '12', nombre: prevData['12'].nombre, prev: prevData['12'].valor, curr: currData['12'].valor },
+                { puc: '13', nombre: prevData['13'].nombre, prev: prevData['13'].valor, curr: currData['13'].valor },
+                { puc: '15', nombre: prevData['15'].nombre, prev: prevData['15'].valor, curr: currData['15'].valor },
+                { puc: '17', nombre: prevData['17'].nombre, prev: prevData['17'].valor, curr: currData['17'].valor },
+                { puc: 'TOTAL_A', nombre: 'TOTAL ACTIVOS', prev: prevData.ACTIVOS, curr: currData.ACTIVOS },
+                { puc: '21', nombre: prevData['21'].nombre, prev: prevData['21'].valor, curr: currData['21'].valor },
+                { puc: '23', nombre: prevData['23'].nombre, prev: prevData['23'].valor, curr: currData['23'].valor },
+                { puc: '24', nombre: prevData['24'].nombre, prev: prevData['24'].valor, curr: currData['24'].valor },
+                { puc: '25', nombre: prevData['25'].nombre, prev: prevData['25'].valor, curr: currData['25'].valor },
+                { puc: '26', nombre: prevData['26'].nombre, prev: prevData['26'].valor, curr: currData['26'].valor },
+                { puc: '27', nombre: prevData['27'].nombre, prev: prevData['27'].valor, curr: currData['27'].valor },
+                { puc: '28', nombre: prevData['28'].nombre, prev: prevData['28'].valor, curr: currData['28'].valor },
+                { puc: 'TOTAL_P', nombre: 'TOTAL PASIVOS', prev: prevData.PASIVOS, curr: currData.PASIVOS },
+                { puc: '31', nombre: prevData['31'].nombre, prev: prevData['31'].valor, curr: currData['31'].valor },
+                { puc: '32', nombre: prevData['32'].nombre, prev: prevData['32'].valor, curr: currData['32'].valor },
+                { puc: '33', nombre: prevData['33'].nombre, prev: prevData['33'].valor, curr: currData['33'].valor },
+                { puc: '36', nombre: prevData['36'].nombre, prev: prevData['36'].valor, curr: currData['36'].valor },
+                { puc: '37', nombre: prevData['37'].nombre, prev: prevData['37'].valor, curr: currData['37'].valor },
+                { puc: 'TOTAL_PT', nombre: 'TOTAL PATRIMONIO', prev: prevData.PATRIMONIO, curr: currData.PATRIMONIO }
+            ];
+            
+            // ESTADO DE RESULTADOS - incluyendo utilidad/pérdida
+            const utilidad_prev = prevData.INGRESOS - prevData.GASTOS;
+            const utilidad_curr = currData.INGRESOS - currData.GASTOS;
+            
+            const income_items = [
+                { puc: '41', nombre: prevData['41'].nombre, prev: prevData['41'].valor, curr: currData['41'].valor },
+                { puc: '42', nombre: prevData['42'].nombre, prev: prevData['42'].valor, curr: currData['42'].valor },
+                { puc: 'TOTAL_I', nombre: 'TOTAL INGRESOS', prev: prevData.INGRESOS, curr: currData.INGRESOS },
+                { puc: '51', nombre: prevData['51'].nombre, prev: prevData['51'].valor, curr: currData['51'].valor },
+                { puc: '53', nombre: prevData['53'].nombre, prev: prevData['53'].valor, curr: currData['53'].valor },
+                { puc: 'TOTAL_G', nombre: 'TOTAL GASTOS', prev: prevData.GASTOS, curr: currData.GASTOS },
+                { puc: 'UTIL', nombre: 'UTILIDAD / (PÉRDIDA) NETA', prev: utilidad_prev, curr: utilidad_curr }
+            ];
+            
+            const renderTable = (items) => {
+                return items.map(item => {
+                    const change = item.curr - item.prev;
+                    const pctChange = item.prev !== 0 ? (change / Math.abs(item.prev)) * 100 : 0;
+                    const changeClass = change >= 0 ? 'change-positive' : 'change-negative';
+                    
+                    let style = '';
+                    if (item.puc.includes('TOTAL') || item.puc === 'UTIL') {
+                        style = ' style="background: #E8F5E9; font-weight: 600; border-top: 2px solid #0F6E56;"';
+                    }
+                    
+                    // Especial para utilidad: fondo verde si es positivo, rojo si es negativo
+                    if (item.puc === 'UTIL') {
+                        const bgColor = item.prev >= 0 ? '#C8E6C9' : '#FFCDD2';
+                        const textColor = item.prev >= 0 ? '#027500' : '#C62828';
+                        style = ` style="background: ${bgColor}; font-weight: 700; border-top: 3px solid #0F6E56; color: ${textColor};"`;
+                    }
+                    
+                    return `
+                        <tr${style}>
+                            <td class="item-name">${item.nombre}</td>
+                            <td class="number">${formatCurrency(item.prev)}</td>
+                            <td class="number">${formatCurrency(item.curr)}</td>
+                            <td class="number ${changeClass}">${formatCurrency(change)}</td>
+                            <td class="percentage ${changeClass}">${pctChange.toFixed(2)}%</td>
+                        </tr>
+                    `;
+                }).join('');
+            };
+            
+            document.getElementById('horizontal-balance-table').innerHTML = `
+                <tr style="background: #0F6E56; color: white; font-weight: 700;">
+                    <th colspan="5">BALANCE GENERAL</th>
+                </tr>
+                <tr>
+                    <th>Concepto</th>
+                    <th>${prevMonth}</th>
+                    <th>${currMonth}</th>
+                    <th>Cambio $</th>
+                    <th>Cambio %</th>
+                </tr>
+                ${renderTable(balance_items)}
+            `;
+            
+            document.getElementById('horizontal-income-table').innerHTML = `
+                <tr style="background: #0F6E56; color: white; font-weight: 700;">
+                    <th colspan="5">ESTADO DE RESULTADOS</th>
+                </tr>
+                <tr>
+                    <th>Concepto</th>
+                    <th>${prevMonth}</th>
+                    <th>${currMonth}</th>
+                    <th>Cambio $</th>
+                    <th>Cambio %</th>
+                </tr>
+                ${renderTable(income_items)}
+            `;
+        }
+
+        // Funciones de cálculo de KRI
+        function calculateKRI(month) {
+            const data = financialData[month];
+            
+            // 1. Efectivo / Pasivos Totales (Umbral > 0.30)
+            const kri_efectivo_pasivos = data.EFECTIVO / data.PASIVOS;
+            
+            // 2. Endeudamiento Total (Umbral < 40%)
+            const kri_endeudamiento = (data.PASIVOS / data.ACTIVOS) * 100;
+            
+            // 3. Cobertura Gastos Fijos (Umbral > 1.20)
+            // Asumiendo que gastos fijos son 70% de gastos administrativos
+            const gastos_fijos = data.GASTOS_ADMIN * 0.70;
+            const kri_cobertura = (data.INGRESOS - data.GASTOS) / gastos_fijos;
+            
+            // 4. Contracción de Ingresos (Umbral > -20%)
+            // Se calcula comparando con mes anterior
+            let kri_contraccion = 0; // Será calculado después
+            
+            return {
+                kri_efectivo_pasivos: kri_efectivo_pasivos,
+                kri_endeudamiento: kri_endeudamiento,
+                kri_cobertura: kri_cobertura,
+                kri_contraccion: kri_contraccion
+            };
+        }
+        
+        // Evaluar estado del KRI
+        function evaluateKRIStatus(kri_name, value, threshold) {
+            switch(kri_name) {
+                case 'kri_efectivo_pasivos':
+                    return value > threshold ? 'green' : (value > threshold * 0.8 ? 'yellow' : 'red');
+                case 'kri_endeudamiento':
+                    return value < threshold ? 'green' : (value < threshold * 1.2 ? 'yellow' : 'red');
+                case 'kri_cobertura':
+                    return value > threshold ? 'green' : (value > threshold * 0.8 ? 'yellow' : 'red');
+                case 'kri_contraccion':
+                    return value > threshold ? 'red' : (value > threshold * 0.5 ? 'yellow' : 'green');
+                default:
+                    return 'gray';
+            }
+        }
+        
+        // Renderizar KRI
+        function renderKRI(month) {
+            const kri = calculateKRI(month);
+            const prev_month = month === 'ENERO' ? null : (month === 'FEBRERO' ? 'ENERO' : 'FEBRERO');
+            
+            let kri_contraccion = 0;
+            if (prev_month) {
+                const ingresos_prev = financialData[prev_month].INGRESOS;
+                const ingresos_curr = financialData[month].INGRESOS;
+                kri_contraccion = ((ingresos_curr - ingresos_prev) / ingresos_prev) * 100;
+                kri.kri_contraccion = kri_contraccion;
+            }
+            
+            const kris = [
+                {
+                    nombre: 'Liquidez - Efectivo / Pasivos',
+                    sigla: 'Liquidez',
+                    valor: kri.kri_efectivo_pasivos,
+                    umbral: 0.30,
+                    formato: (v) => v.toFixed(2),
+                    descripcion: 'Mide capacidad de efectivo para cubrir pasivos',
+                    alerta_green: 'Excelente cobertura de efectivo',
+                    alerta_yellow: 'Adecuada pero requiere monitoreo',
+                    alerta_red: 'Riesgo de liquidez, insuficiente efectivo'
+                },
+                {
+                    nombre: 'Endeudamiento Total',
+                    sigla: 'Deuda',
+                    valor: kri.kri_endeudamiento,
+                    umbral: 40,
+                    formato: (v) => v.toFixed(2) + '%',
+                    descripcion: 'Proporción de pasivos vs activos totales',
+                    alerta_green: 'Estructura de capital saludable',
+                    alerta_yellow: 'Endeudamiento moderado, monitorear',
+                    alerta_red: 'Endeudamiento crítico, requiere acción'
+                },
+                {
+                    nombre: 'Cobertura de Gastos Fijos',
+                    sigla: 'Cobertura',
+                    valor: kri.kri_cobertura,
+                    umbral: 1.20,
+                    formato: (v) => v.toFixed(2) + 'x',
+                    descripcion: 'Capacidad de ingresos para cubrir gastos fijos',
+                    alerta_green: 'Ingresos cubren ampliamente gastos fijos',
+                    alerta_yellow: 'Cobertura ajustada, vigilar flujo de caja',
+                    alerta_red: 'Riesgo: ingresos insuficientes para gastos fijos'
+                },
+                {
+                    nombre: 'Contracción de Ingresos',
+                    sigla: 'Ingresos',
+                    valor: kri.kri_contraccion,
+                    umbral: -20,
+                    formato: (v) => v.toFixed(2) + '%',
+                    descripcion: 'Variación porcentual de ingresos vs mes anterior',
+                    alerta_green: 'Crecimiento o estabilidad en ingresos',
+                    alerta_yellow: 'Leve contracción, requiere atención',
+                    alerta_red: 'Caída significativa de ingresos'
+                }
+            ];
+            
+            let html = '';
+            kris.forEach((kri_item, idx) => {
+                const status = evaluateKRIStatus(Object.keys(kri)[idx], kri_item.valor, kri_item.umbral);
+                const status_emoji = status === 'green' ? '🟢' : (status === 'yellow' ? '🟡' : '🔴');
+                
+                html += `
+                    <div class="kri-card ${status}">
+                        <div class="kri-header">
+                            <div class="kri-title">${kri_item.sigla}</div>
+                            <div class="kri-status ${status}">${status_emoji}</div>
+                        </div>
+                        <div class="kri-value">${kri_item.formato(kri_item.valor)}</div>
+                        <div style="font-size: 12px; color: #5F5E5A; margin-top: 8px;">${kri_item.descripcion}</div>
+                        <div class="kri-threshold">
+                            <span class="kri-threshold-label">Umbral:</span> ${kri_item.valor < kri_item.umbral && idx !== 3 && idx !== 4 ? '<' : '>'} ${kri_item.formato(kri_item.umbral)}
+                        </div>
+                        <div class="kri-alert ${status}">
+                            ${status === 'green' ? kri_item.alerta_green : (status === 'yellow' ? kri_item.alerta_yellow : kri_item.alerta_red)}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            document.getElementById('kri-indicators-container').innerHTML = html;
+        }
+        
+        
+        document.querySelectorAll('.month-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                if (e.target.classList.contains('disabled')) return;
+                document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+                e.target.classList.add('active');
+                currentMonth = e.target.dataset.month;
+                document.getElementById('current-month').textContent = e.target.textContent;
+                renderIndicators(currentMonth);
+                renderKRI(currentMonth);
+                renderVerticalAnalysis();
+                renderHorizontalAnalysis();
+            });
+        });
+
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+                e.target.classList.add('active');
+                const tab = e.target.dataset.tab;
+                document.getElementById(tab).classList.add('active');
+                
+                if (tab === 'vertical') renderVerticalAnalysis();
+                if (tab === 'horizontal') renderHorizontalAnalysis();
+                if (tab === 'kri') renderKRI(currentMonth);
+            });
+        });
+
+        // Inicializar
+        renderIndicators(currentMonth);
+        renderKRI(currentMonth);
+        renderVerticalAnalysis();
+        renderHorizontalAnalysis();
+    </script>
+</body>
+</html>
